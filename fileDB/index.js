@@ -3,10 +3,12 @@ const path = require("path");
 const { v4: uuidv4 } = require("uuid");
 
 const schemas = {};
+let schemaName;
 
 const fileDB = {
   registerSchema (name, schema) {
     schemas[name] = schema;
+    schemaName = name;
   },
 
   getTable (name) {
@@ -39,8 +41,13 @@ const fileDB = {
     function createTable (data) {
       try {
         data.id = uuidv4();
-        table.push(data);
-        saveTable();
+
+        if (checkSchemaKeys(data)) {
+          table.push(data);
+          saveTable();
+        } else {
+          console.log("Wrong key is entered");
+        }
       } catch (err) {
         console.log(err);
       }
@@ -48,10 +55,23 @@ const fileDB = {
 
     function updateTable (id, updateData) {
       try {
-        const allTable = getAllTable();
-        const currentObject = allTable.find(el => el.id === id);
-        Object.assign(currentObject, updateData);
-        saveTable();
+        const currentObject = getTableById(id);
+        const schemaKeys = Object.keys(schemas[schemaName]);
+        const objectKeys = Object.keys(updateData);
+
+        for (const key of objectKeys) {
+          if (schemaKeys.includes(key)) {
+            currentObject[key] = updateData[key];
+          } else {
+            console.log("Wrong key is entered");
+            return;
+          }
+        }
+
+        if (checkSchemaKeys(currentObject)) {
+          Object.assign(currentObject, updateData);
+          saveTable();
+        }
       } catch (err) {
         console.log(err);
       }
@@ -60,7 +80,10 @@ const fileDB = {
     function deleteTable (id) {
       try {
         table = table.filter(el => el.id !== id);
-        saveTable();
+
+        if (table) {
+          saveTable();
+        }
       } catch (err) {
         console.log(err);
       }
@@ -70,9 +93,16 @@ const fileDB = {
       try {
         const data = JSON.stringify(table, null, 2);
         fs.writeFileSync(fileName, data);
+        console.log("Table save");
       } catch (err) {
         console.error(`Error writing ${fileName}: ${err}`);
       }
+    }
+
+    function checkSchemaKeys (data) {
+      const schemaKeys = Object.keys(schemas[schemaName]);
+      const recordKeys = Object.keys(data);
+      return schemaKeys.every(key => recordKeys.includes(key));
     }
 
     return {
