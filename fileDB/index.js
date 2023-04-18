@@ -12,19 +12,17 @@ const fileDB = {
   },
 
   getTable (name) {
-    const fileName = path.join(__dirname, `${name}.json`);
-    let table = [];
+    const isFile = fs.existsSync(path.join("fileDB", `${name}.json`));
 
-    try {
-      const data = fs.readFileSync(fileName);
-      table = JSON.parse(data);
-    } catch (err) {
-      console.log(err);
+    if (!isFile) {
+      console.log(`${name} file does not exist`);
+      return;
     }
+    const fileName = path.join(__dirname, `${name}.json`);
 
     function getAllTable () {
       try {
-        return table;
+        return JSON.parse(fs.readFileSync(fileName).toString());
       } catch (err) {
         console.log(err);
       }
@@ -32,19 +30,21 @@ const fileDB = {
 
     function getTableById (id) {
       try {
+        const table = JSON.parse(fs.readFileSync(fileName).toString());
         return table.find(el => el.id === id);
       } catch (err) {
         console.log(err);
       }
     }
 
-    function createTable (data) {
+    async function createTable (data) {
       try {
         data.id = uuidv4();
 
         if (checkSchemaKeys(data)) {
+          const table = JSON.parse(fs.readFileSync(fileName).toString());
           table.push(data);
-          saveTable();
+          await saveTable(table);
         } else {
           console.log("Wrong key is entered");
         }
@@ -53,46 +53,49 @@ const fileDB = {
       }
     }
 
-    function updateTable (id, updateData) {
+    async function updateTable (id, updateData) {
       try {
+        const table = JSON.parse(fs.readFileSync(fileName).toString());
         const currentObject = getTableById(id);
         const schemaKeys = Object.keys(schemas[schemaName]);
         const objectKeys = Object.keys(updateData);
 
         for (const key of objectKeys) {
           if (schemaKeys.includes(key)) {
-            currentObject[key] = updateData[key];
+            table.forEach(el => {
+              if (el.id === id) {
+                el[key] = updateData[key];
+              }
+            });
           } else {
             console.log("Wrong key is entered");
             return;
           }
         }
 
-        if (checkSchemaKeys(currentObject)) {
-          Object.assign(currentObject, updateData);
-          saveTable();
-        }
+        if (checkSchemaKeys(currentObject)) await saveTable(table);
       } catch (err) {
         console.log(err);
       }
     }
 
-    function deleteTable (id) {
+    async function deleteTable (id) {
       try {
+        let table = JSON.parse(fs.readFileSync(fileName).toString());
         table = table.filter(el => el.id !== id);
 
         if (table) {
-          saveTable();
+          await saveTable(table);
         }
       } catch (err) {
         console.log(err);
       }
     }
 
-    function saveTable () {
+    async function saveTable (table) {
       try {
         const data = JSON.stringify(table, null, 2);
-        fs.writeFileSync(fileName, data);
+        await fs.writeFileSync(fileName, data);
         console.log("Table save");
       } catch (err) {
         console.error(`Error writing ${fileName}: ${err}`);
