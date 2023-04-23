@@ -1,11 +1,14 @@
 const http = require("http");
+const config = require("./config");
+require("dotenv").config();
 
-let port = 3000;
+let port = config.get("PORT");
 let requestCount = 0;
 
 const server = http.createServer((req, res) => {
   requestCount++;
   res.statusCode = 200;
+
   res.end(JSON.stringify({
     message: "Request handled successfully",
     requestCount

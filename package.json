@@ -6,6 +6,7 @@
   "scripts": {
     "start": "node index.js",
     "start:dev": "nodemon index.js",
+    "start:table": "node fileDB/table.js",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "repository": {
@@ -19,7 +20,11 @@
   },
   "homepage": "https://github.com/antonmerkotun/homework_node#readme",
   "dependencies": {
-    "nodemon": "^2.0.22"
+    "convict": "^6.2.4",
+    "dotenv": "^16.0.3",
+    "fs": "^0.0.1-security",
+    "nodemon": "^2.0.22",
+    "uuid": "^9.0.0"
   },
   "devDependencies": {
     "@typescript-eslint/eslint-plugin": "^5.43.0",
